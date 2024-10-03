@@ -1,36 +1,53 @@
 import { Injectable } from '@nestjs/common';
+import { PrismaService } from '../prisma/prisma.service';
+import { CreateTaskDto } from './dto/create-task.dto';
+import { UpdateTaskDto } from './dto/update-task.dto';
+import { NotFoundException } from '@nestjs/common';
 
 @Injectable()
 export class TasksService {
-  private tasks = []; // Хранилище для задач (временное, в реальном проекте используется база данных)
+  constructor(private prisma: PrismaService) {}
 
-  create(task: any) {
-    this.tasks.push(task);
+  async create(createTaskDto: CreateTaskDto, userId: number) {
+    return this.prisma.task.create({
+      data: {
+        ...createTaskDto,
+        userId,
+      },
+    });
+  }
+
+  async findAll() {
+    return this.prisma.task.findMany();
+  }
+
+  async findOne(id: number) {
+    return this.prisma.task.findUnique({
+      where: { id },
+    });
+  }
+
+  async update(id: number, updateTaskDto: UpdateTaskDto) {
+    console.log('Updating task with id:', id);
+    console.log('Data:', updateTaskDto);
+  
+    const task = await this.prisma.task.update({
+      where: { id },
+      data: updateTaskDto,
+    });
+  
+    console.log('Updated task:', task);
     return task;
   }
+  
+  
+  
+  
+  
 
-  findAll() {
-    return this.tasks;
-  }
-
-  findOne(id: number) {
-    return this.tasks.find(task => task.id === id);
-  }
-
-  update(id: number, updatedTask: any) {
-    const taskIndex = this.tasks.findIndex(task => task.id === id);
-    if (taskIndex > -1) {
-      this.tasks[taskIndex] = { id, ...updatedTask };
-      return this.tasks[taskIndex];
-    }
-    return null;
-  }
-
-  remove(id: number) {
-    const taskIndex = this.tasks.findIndex(task => task.id === id);
-    if (taskIndex > -1) {
-      return this.tasks.splice(taskIndex, 1);
-    }
-    return null;
+  async remove(id: number) {
+    return this.prisma.task.delete({
+      where: { id },
+    });
   }
 }

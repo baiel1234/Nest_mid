@@ -1,38 +1,57 @@
-import { Controller, Get, Post, Body, Param, Delete, Put, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Delete, Put, UseGuards, Req } from '@nestjs/common';
 import { TasksService } from './tasks.service';
-import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
+import { CreateTaskDto } from './dto/create-task.dto';
+import { UpdateTaskDto } from './dto/update-task.dto';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { NotFoundException } from '@nestjs/common';
 
 @Controller('tasks')
 export class TasksController {
   constructor(private readonly tasksService: TasksService) {}
 
-  @Post()
   @UseGuards(JwtAuthGuard)
-  create(@Body() createTaskDto: any) {
-    return this.tasksService.create(createTaskDto);
+  @Post()
+  create(@Body() createTaskDto: CreateTaskDto, @Req() req: any) {
+    const userId = req.user.userId;
+    return this.tasksService.create(createTaskDto, userId);
   }
 
-  @Get()
   @UseGuards(JwtAuthGuard)
+  @Get()
   findAll() {
     return this.tasksService.findAll();
   }
 
-  @Get(':id')
   @UseGuards(JwtAuthGuard)
+  @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.tasksService.findOne(Number(id));
+    return this.tasksService.findOne(+id);
   }
 
   @Put(':id')
-  @UseGuards(JwtAuthGuard)
-  update(@Param('id') id: string, @Body() updateTaskDto: any) {
-    return this.tasksService.update(Number(id), updateTaskDto);
+@UseGuards(JwtAuthGuard)
+async update(@Param('id') id: string, @Body() updateTaskDto: UpdateTaskDto) {
+  const updatedTask = await this.tasksService.update(+id, updateTaskDto);
+
+  // Проверьте, существует ли задача, и верните ответ
+  if (!updatedTask) {
+    throw new NotFoundException('Task not found');
   }
 
-  @Delete(':id')
+  return {
+    success: true,
+    data: updatedTask,
+  };
+}
+
+
+  
+
+
+
   @UseGuards(JwtAuthGuard)
+  @Delete(':id')
   remove(@Param('id') id: string) {
-    return this.tasksService.remove(Number(id));
+    return this.tasksService.remove(+id);
   }
 }
