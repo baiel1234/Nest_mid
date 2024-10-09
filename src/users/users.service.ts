@@ -1,39 +1,72 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { UpdateRoleDto } from './dto/update-profile.dto';
-import { Role } from './enums/role.enum';  // Импортируем enum Role
-import { NotFoundException } from '@nestjs/common';
-import { RegisterDto } from '../auth/dto/register.dto';
+import { UserDto } from './dto/user.dto';
+import { User, Role } from '@prisma/client'; // Импортируем тип User из @prisma/client
+import { UpdateRoleDto } from './dto/update-role.dto'; // DTO для обновления роли
 
 @Injectable()
 export class UsersService {
   constructor(private prisma: PrismaService) {}
 
-  // Метод для обновления роли
-  async updateUserRole(userId: number, role: Role) {
-    return this.prisma.user.update({
-      where: { id: userId },
+  async create(createUserDto: UserDto): Promise<User> {
+    const newUser = await this.prisma.user.create({
       data: {
-        role: {
-          set: role,  // Здесь мы используем специальный объект для обновления enum поля
-        },
+        email: createUserDto.email,
+        password: createUserDto.password,
       },
     });
+    return newUser;
   }
-  async findByEmail(email: string) {
+
+  async findAll(): Promise<User[]> {
+    return this.prisma.user.findMany();
+  }
+
+  async findByEmail(email: string): Promise<User | null> {
     return this.prisma.user.findUnique({
-      where: { email }, // Поиск пользователя по email
+      where: { email },
     });
   }
-  async create(registerDto: RegisterDto) {
-    return this.prisma.user.create({
+
+  async getProfile(userId: number): Promise<User> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    return user;
+  }
+
+  async update(id: number, userDto: UserDto): Promise<User> {
+    const user = await this.prisma.user.update({
+      where: { id },
       data: {
-        email: registerDto.email,
-        password: registerDto.password, // Убедитесь, что вы хэшируете пароль перед сохранением
+        email: userDto.email,
+        password: userDto.password,
       },
     });
+    return user;
   }
-  async getAllUsers() {
-    return this.prisma.user.findMany();  // Получаем всех пользователей
+
+  async delete(id: number): Promise<void> {
+    await this.prisma.user.delete({
+      where: { id },
+    });
+  }
+
+  async updateRole(userId: number, updateRoleDto: UpdateRoleDto) {
+    const { role } = updateRoleDto;
+
+    const user = await this.prisma.user.update({
+      where: { id: userId },
+      data: { role },
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    return user;
   }
 }
