@@ -1,24 +1,39 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service'; // Импортируем сервис Prisma
-import { RegisterDto } from '../auth/dto/register.dto'; // Импортируй DTO для регистрации
-import { User } from '@prisma/client'; // Импортируем тип User из Prisma
+import { PrismaService } from '../prisma/prisma.service';
+import { UpdateRoleDto } from './dto/update-profile.dto';
+import { Role } from './enums/role.enum';  // Импортируем enum Role
+import { NotFoundException } from '@nestjs/common';
+import { RegisterDto } from '../auth/dto/register.dto';
 
 @Injectable()
 export class UsersService {
-  constructor(private readonly prisma: PrismaService) {} // Инжектируем PrismaService
+  constructor(private prisma: PrismaService) {}
 
-  async findByEmail(email: string): Promise<User | null> {
-    return this.prisma.user.findUnique({ where: { email } });
-  }
-
-  async create(registerDto: RegisterDto): Promise<User> {
-    return this.prisma.user.create({
+  // Метод для обновления роли
+  async updateUserRole(userId: number, role: Role) {
+    return this.prisma.user.update({
+      where: { id: userId },
       data: {
-        email: registerDto.email,
-        password: registerDto.password, // Пароль уже должен быть хеширован в AuthService
+        role: {
+          set: role,  // Здесь мы используем специальный объект для обновления enum поля
+        },
       },
     });
   }
-
-  // Другие методы...
+  async findByEmail(email: string) {
+    return this.prisma.user.findUnique({
+      where: { email }, // Поиск пользователя по email
+    });
+  }
+  async create(registerDto: RegisterDto) {
+    return this.prisma.user.create({
+      data: {
+        email: registerDto.email,
+        password: registerDto.password, // Убедитесь, что вы хэшируете пароль перед сохранением
+      },
+    });
+  }
+  async getAllUsers() {
+    return this.prisma.user.findMany();  // Получаем всех пользователей
+  }
 }
