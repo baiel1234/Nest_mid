@@ -1,4 +1,4 @@
-import { Controller, Get, Patch, Param, Body, Req, Delete } from '@nestjs/common';
+import { Controller, Get, Patch, Param, Body, Req, Delete ,BadRequestException} from '@nestjs/common';
 import { UsersService } from './users.service';
 import { UserDto } from './dto/user.dto';
 import { User , Role} from '@prisma/client';
@@ -24,9 +24,11 @@ export class UsersController {
   }
 
   @Delete(':id')
-  async delete(@Param('id') id: number): Promise<void> {
-    return this.usersService.delete(id);
-  }
+delete(@Param('id') id: string): void {
+  this.usersService.delete(id); // id передается как строка
+}
+
+
 
   @Patch('update-role/:id')
   async updateRole(

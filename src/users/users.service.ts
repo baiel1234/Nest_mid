@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException,BadRequestException} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { UserDto } from './dto/user.dto';
 import { User, Role } from '@prisma/client'; // Импортируем тип User из @prisma/client
@@ -49,11 +49,16 @@ export class UsersService {
     return user;
   }
 
-  async delete(id: number): Promise<void> {
-    await this.prisma.user.delete({
-      where: { id },
+  async delete(id: string): Promise<void> {
+    const userId = parseInt(id, 10); // Преобразование строки в число
+  
+    const user = await this.prisma.user.delete({
+      where: { id: userId }, // Убедитесь, что id является числом
     });
   }
+  
+  
+  
 
   async updateRole(userId: number, updateRoleDto: UpdateRoleDto) {
     const { role } = updateRoleDto;
