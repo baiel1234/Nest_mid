@@ -53,10 +53,15 @@ export class TasksService {
     return task;
   }
 
-  async delete(id: number): Promise<void> {
-    const task = await this.prisma.task.delete({ where: { id } });
-    if (!task) {
+  // Логика удаления задачи
+  async deleteTask(id: number): Promise<void> {
+    try {
+      await this.prisma.task.delete({
+        where: { id },
+      });
+    } catch (error) {
       throw new NotFoundException('Task not found');
     }
   }
-}
+  }
+
