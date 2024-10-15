@@ -1,8 +1,8 @@
 import { BadRequestException, Controller, Get, Post, Body, Param, Patch, Delete } from '@nestjs/common';
 import { TasksService } from './tasks.service';
 import { CreateTaskDto } from './dto/create-task.dto';
-import { Task } from '@prisma/client';
-import { UpdateTaskDto } from './dto/update-task.dto';
+import { Task,TaskStatus } from '@prisma/client';
+import { UpdateTaskDto } from './dto/update-task.dto'; 
 
 @Controller('tasks')
 export class TasksController {
@@ -18,10 +18,12 @@ export class TasksController {
     return this.tasksService.findAll();
   }
 
+  // Маршрут для получения задачи по id
   @Get(':id')
-  findOne(@Param('id') id: number): Promise<Task> {
-    return this.tasksService.findOne(id);
+  findOne(@Param('id') id: string): Promise<Task> {
+    return this.tasksService.findOne(Number(id));
   }
+
 
   @Patch(':id/status') // Здесь важно правильное указание маршрута
   async updateTaskStatus(
@@ -44,4 +46,10 @@ async deleteTask(@Param('id') id: string): Promise<void> {
 
   return this.tasksService.deleteTask(taskId);
 }
+
+@Get('filter/:status')
+async getFilteredTasks(@Param('status') status: TaskStatus) {
+  return this.tasksService.getFilteredTasks(status); // Правильное использование 'tasksService'
+}
+
 }

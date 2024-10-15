@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateTaskDto } from './dto/create-task.dto';
-import { Task } from '@prisma/client';
+import { Task,TaskStatus  } from '@prisma/client';
 import { UpdateTaskDto } from './dto/update-task.dto';
 
 @Injectable()
@@ -30,12 +30,15 @@ export class TasksService {
     return this.prisma.task.findMany();
   }
 
+  // Логика получения задачи по id
   async findOne(id: number): Promise<Task> {
     const task = await this.prisma.task.findUnique({ where: { id } });
+
     if (!task) {
-      throw new NotFoundException('Task not found');
+      throw new NotFoundException('Task not found'); // Выбрасываем исключение, если задача не найдена
     }
-    return task;
+
+    return task; // Возвращаем задачу, если она найдена
   }
 
   async updateTaskStatus(id: number, updateTaskDto: UpdateTaskDto): Promise<Task> {
@@ -63,5 +66,14 @@ export class TasksService {
       throw new NotFoundException('Task not found');
     }
   }
+
+  async getFilteredTasks(status: TaskStatus): Promise<Task[]> {
+    return this.prisma.task.findMany({
+      where: {
+        status: status,
+      },
+    });
+  }
+  
   }
 
