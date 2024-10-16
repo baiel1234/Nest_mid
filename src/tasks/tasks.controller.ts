@@ -3,11 +3,13 @@ import { TasksService } from './tasks.service';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { Task,TaskStatus } from '@prisma/client';
 import { UpdateTaskDto } from './dto/update-task.dto'; 
+import { RateLimit } from 'nestjs-rate-limiter';
 
 @Controller('tasks')
 export class TasksController {
   constructor(private readonly tasksService: TasksService) {}
 
+  @RateLimit({ points: 5, duration: 60 }) // Лимит 5 запросов за 1 минуту
   @Post()
   create(@Body() createTaskDto: CreateTaskDto) {
     return this.tasksService.createTask(createTaskDto);
